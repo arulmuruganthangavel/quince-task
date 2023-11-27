@@ -1,0 +1,27 @@
+# Stage 1: Build the application
+FROM adoptopenjdk:11-jdk-hotspot AS builder
+
+WORKDIR /app
+
+# Copy the Maven wrapper and the project files
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+COPY src src
+
+# Build the application
+RUN ./mvnw install -DskipTests
+
+# Stage 2: Create a minimal runtime image
+FROM adoptopenjdk:11-jre-hotspot
+
+WORKDIR /app
+
+# Copy the JAR file from the builder stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# Expose the port the app runs on
+EXPOSE 8080
+
+# Command to run the application
+CMD ["java", "-jar", "app.jar"]
